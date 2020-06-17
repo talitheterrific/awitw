@@ -180,7 +180,9 @@ def jack():
         if action == '1':
             spoke()
         else:
-            dead('Your campsite is found by a group of travelers the next morning,\nits contents unspeakable in their carnage.')
+            camp()
+
+
 
 def lonely():
     print('You trudge along on foot, the lantern swinging quietly in tandem')
@@ -194,19 +196,35 @@ def lonely():
     elif luck > 5 and luck < 13:
         bear(luck)
     else:
-        bandits(luck)
+        bandits(luck, '')
 
-def bandits(luck):
-    print('Three men block your path! "You\'re out late, aren\'t ya?" one')
-    print('says as the other two draw knives.')
-    action = input()
-    if action == '1':
-        combat(3, 20, 50, 'bandits')
-    elif action == '2':
-        bandit_talks
+def bandits(luck, tags):
+    if 'bear' in tags:
+        print('Filler bear text')
+    elif 'werewolf' in tags:
+        print('Filler werewolf text')
+    elif 'b_win' in tags:
+        print('Three men block your path! "You\'re out late, aren\'t ya?" one')
+        print('says as the other two draw knives. "Out late and hurt."')
+        action = input('> ')
+        if action == '1':
+            combat(3, 20, 50, 'bandits')
+        elif action == '2':
+            bandit_talks
+        else:
+            print('Please input a valid response.')
+            bandits(luck, tags)
     else:
-        print('Please input a valid response.')
-        bandits(luck)
+        print('Three men block your path! "You\'re out late, aren\'t ya?" one')
+        print('says as the other two draw knives.')
+        action = input('> ')
+        if action == '1':
+            combat(3, 20, 50, 'bandits')
+        elif action == '2':
+            bandit_talks
+        else:
+            print('Please input a valid response.')
+            bandits(luck, tags)
 
 def bear(luck):
     print('A bear blocks your path!')
@@ -216,15 +234,18 @@ def werewolf(luck):
     print('A werewolf blocks your path!')
     combat(1, 100, 50, 'werewolf')
 
-def victory(tags):
-    print('Filler text.')
+def victory(php, tags):
+    print(f'You have defeated the {tags} with {php} health remaining.')
+    if 'bear' in tags:
+        bandits('', 'b_win')
 
 def flee(tags):
-    print('You are fleeing.')
     if 'bear' in tags:
         print('You are fleeing from a bear.')
+        bandits('', 'bear')
     elif 'werewolf' in tags:
         print('You are fleeing from a werewolf.')
+        bandits('', 'werewolf')
     elif 'bandits' in tags:
         print('You are fleeing from a group of bandits.')
     else:
@@ -242,7 +263,7 @@ def combat(x, ehp, php, tags):
         if enemy != 0:
             enemy_combat(enemy, enemy_hp, player_hp, tags)
         if enemy == 0:
-            victory(tags)
+            victory(player_hp, tags)
     elif player_attack >= 13:
         print('Hit!')
         enemy_hp -= random.randint(1, 10)
@@ -250,6 +271,13 @@ def combat(x, ehp, php, tags):
         run = input('Press Enter to Continue or type \'Run\' to flee!')
         if 'run' in run or 'Run' in run:
             flee(tags)
+        elif enemy_hp <= 0:
+            enemy -= 1
+            enemy_hp = 20
+            if enemy != 0:
+                enemy_combat(enemy, enemy_hp, player_hp, tags)
+            if enemy == 0:
+                victory(player_hp, tags)
         else:
             enemy_combat(enemy, enemy_hp, player_hp, tags)
 
@@ -268,14 +296,29 @@ def enemy_combat(x, ehp, php, tags):
     enemy_attack = random.randint(1, 20) + war_stats[0]
     print(enemy_attack)
     if player_hp <= 0:
-        dead('You are mugged and left to bleed.')
+        if 'werewolf' in tags or 'bear' in tags:
+            dead('You are mauled viciously.')
+        elif 'bandits' in tags:
+            dead('You are mugged and left to bleed.')
+        else:
+            dead('Testing')
     elif enemy_attack >= 13:
         print('You have been hit!')
-        player_hp -= random.randint(1, 10)
+        if 'werewolf' in tags:
+            player_hp -= random.randint(1, 20)
+        else:
+            player_hp -= random.randint(1, 10)
         print(player_hp)
         run = input('Press Enter to Continue or type \'Run\' to flee!')
         if 'run' in run or 'Run' in run:
             flee(tags)
+        elif player_hp <= 0:
+            if 'werewolf' in tags or 'bear' in tags:
+                dead('You are mauled viciously.')
+            elif 'bandits' in tags:
+                dead('You are mugged and left to bleed.')
+            # else:
+                # dead('Testing')
         else:
             combat(enemy, enemy_hp, player_hp, tags)
 
@@ -338,7 +381,7 @@ def disruption(tags):
         print('Error')
 
 def explosion(tags):
-    # print(tags)
+    print(tags)
     tags = list(tags)
     ritualtag = tags[10:-23]
     ritualtag = ''.join(ritualtag)
